@@ -24,14 +24,16 @@ main_layout = [[sg.Menu(menu_def, tearoff=True)],
                [sg.Text('Hello, what you want to do?', size=(50, 1), font=30)],
                [sg.Button('Add expense', border_width=3, pad=((0, 0), (20, 0))),
                 sg.Button('Add income', border_width=3, pad=((75, 0), (20, 0)))],
-               [sg.Button('Quit', border_width=3, pad=((240, 0), (60, 0)))]
+               [sg.Button('Quit', border_width=3, pad=((240, 0), (60, 0)))],
+               [sg.Button('Visualization')]
                ]
 
 # windows
 main_window = sg.Window("Expense tracker", main_layout, grab_anywhere=False, size=(300, 200))
-menu_window = False
+browse_wn_active = False
 win2_active = False
 win3_active = False
+graph_active = False
 i = 0
 
 # loop
@@ -42,13 +44,26 @@ while True:
         break
     elif event == 'Exit':
         break
-    elif event == 'Open' and not menu_window:
-        menu_window = True
-        event, values = sg.Window('Find files', [[sg.Text('What file you want open?')], [sg.InputText(key='-PATH-'),
-                                                                                         sg.FileBrowse()],
-                                                 [sg.OK(), sg.Cancel()]], size=(450, 150)).read(close=True)
-        source = values['-PATH-']
-        subprocess.call(["xdg-open", source])
+    elif event == 'Open' and not browse_wn_active:
+        browse_wn_active = True
+
+        browse_layout = [[sg.Text('What file you want open?')],
+                         [sg.InputText(key='-PATH-'), sg.FileBrowse()],
+                        [sg.OK(), sg.Cancel()]]
+
+        browse_window = sg.Window('Find files', browse_layout)
+        if browse_wn_active:
+            event, values = browse_window.read()
+            if event != sg.TIMEOUT_KEY:
+                print('win2', event)
+            if event == 'Cancel' or sg.WIN_CLOSED:
+                browse_wn_active = False
+                browse_window.close()
+            if event == 'OK':
+                source = values['-PATH-']
+                subprocess.call(["xdg-open", source])
+                browse_wn_active = False
+                browse_window.close()
 
     elif event == 'Add expense' and not win2_active:
         win2_active = True
@@ -77,7 +92,7 @@ while True:
                 sg.popup('Your expense successfully added')
                 win2_active = False
                 window2.close()
-            if event == 'Back' or event == sg.WIN_CLOSED:
+            if event == 'Back' or sg.WIN_CLOSED:
                 win2_active = False
                 window2.close()
 
@@ -107,8 +122,13 @@ while True:
                 sg.popup('Your earned money successfully added')
                 win3_active = False
                 window3.close()
-            if event == 'Back' or event == sg.WIN_CLOSED:
+            if event == 'Back' or sg.WIN_CLOSED:
                 win3_active = False
                 window3.close()
+
+    elif event == 'Visualization':
+        graph_active = True
+        
+
 
 main_window.close()
